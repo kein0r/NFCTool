@@ -1,4 +1,4 @@
-#include <Wire.h>
+#include <TwoWirePlus.h>
 #include "PN532.h"
 
 #define PN532_BUFFERSIZE (uint8_t)40
@@ -14,12 +14,13 @@ PN532 nfc(0x24);
 void setup()
 {
   Serial.begin (115200);
-  Wire.begin();
+  nfc.sendCommand(PN532_CommandCode_GetFirmwareVersion, data, 0);
+  Serial.println("Command send");
+  nfc.receiveResponse(data);
+  Serial.println("Response received");
 }  // end of setup
 
 void loop()
 {
-  nfc.sendCommand(PN532_CommandCode_GetFirmwareVersion, data, 0);
-  nfc.receiveAckFrame(ackData);
   delay (1000);
 }
