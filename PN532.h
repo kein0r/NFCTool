@@ -57,6 +57,7 @@ typedef struct {
 } PN532_AckFrame_t;
 
 typedef enum {
+  /* Miscellaneous Communication Commands */
   PN532_CommandCode_Diagnose = 0x00,
   PN532_CommandCode_GetFirmwareVersion = 0x02,
   PN532_CommandCode_GetGeneralStatus = 0x04,
@@ -67,7 +68,29 @@ typedef enum {
   PN532_CommandCode_SetSerialBaudRate = 0x10,
   PN532_CommandCode_SetParameters = 0x12,
   PN532_CommandCode_SAMConfiguration = 0x14,
-  PN532_CommandCode_PowerDown = 0x16
+  PN532_CommandCode_PowerDown = 0x16,
+  /* RF Communication Commands */
+  PN532_CommandCode_RFConfiguration = 0x32,
+  PN532_CommandCode_RFRegulationTest = 0x58,
+  PN532_CommandCode_InJumpForDEP = 0x56,
+  PN532_CommandCode_InJumpForPSL = 0x46,
+  PN532_CommandCode_InListPassiveTarget = 0x4a,
+  PN532_CommandCode_InATR = 0x50,
+  PN532_CommandCode_InPSL = 0x4e,
+  PN532_CommandCode_InDataExchange = 0x40,
+  PN532_CommandCode_InCommunicateThru = 0x42,
+  PN532_CommandCode_InDeselect = 0x44,
+  PN532_CommandCode_InRelease = 0x52,
+  PN532_CommandCode_InSelect = 0x54,
+  PN532_CommandCode_InAutoPoll = 0x60,
+  PN532_CommandCode_TgInitAsTarget = 0x8c,
+  PN532_CommandCode_TgSetGeneralBytes = 0x92,
+  PN532_CommandCode_TgGetData = 0x86,
+  PN532_CommandCode_TgSetData = 0x8e,
+  PN532_CommandCode_TgSetMetaData = 0x94,
+  PN532_CommandCode_TgGetInitiatorCommand = 0x88,
+  PN532_CommandCode_TgResponseToInitiatior = 0x90,
+  PN532_CommandCode_TgSetTargetStatus = 0x8a
 } PN532_CommandCode_t;
 
 typedef uint8_t PN532_Data_t;
