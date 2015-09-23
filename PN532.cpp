@@ -170,63 +170,59 @@ bool PN532::receiveAckFrame()
  * length field in normal information frame header and therefore depend on the command
  * send to PN532 earlier. Application must ensure that there is enough space in 
  * buffer to store the response.
- * @data Pointer to bufffer where to store the response
- * @return Number of bytes received. Zero in case of CRC (length of data) error.
+ * @param data Pointer to bufffer where to store the response
+ * @param length Number of bytes to receive
+ * @return Number of bytes provided length byte in frame. Zero in case of CRC (length of data) error. 
+ * This can be more bytes than actual requested by #length parameter. In this case only #length bytes
+ * were read.
  * @note Only normal information frames are handled right now. Extended information
  * frame will give length checksum error.
  */
-uint8_t PN532::receiveResponse(PN532_Data_t *data)
+uint8_t PN532::receiveResponse(PN532_Data_t *data, uint8_t length)
 {
-  uint8_t bytesReceived = 0;
-  PN532_NormalInformationFrame_t header;
+  uint8_t checksum;
+  uint8_t validDataLength;    /* Number of valid data bytes as reported by length byte */
   
   /* Wait until PN532 is ready to send response */
   waitForStatusReady();
   Wire.beginReception(PN532Address);
-  /* We request more bytes than we actually need, data crc and postamble, to give us 
-   * some time to read length and length crc and request correct number of data bytes 
-   * then. */
-  Wire.requestBytes(PN532_FRAME_LENGTH + 1);
-  /* We need to wait until at least length and length checksum is received to know how  
-   * much bytes are more to come. Then we have two bytes time to request remaining bytes.
-   * PN532_FRAMEHEADER_LENGTH includes TFI byte so we don't need to add 1 here */
-  while (Wire.available() < PN532_FRAMEHEADER_LENGTH ) ;
+  Wire.requestBytes(PN532_FRAME_LENGTH + 1 + length);
+  /* Wait until header is completely received to read it */
+  while (Wire.available() < PN532_FRAMEHEADER_LENGTH + 1 ) ;
   /* Ignore first byte. PN532 sends status byte again. However we assume that PN532 is
    * in ready state. */
   Wire.read();
-  header.preamble = Wire.read();
-  header.startcode = 0x00ff & Wire.read();
-  header.startcode |= (Wire.read() << 8) & 0xff00;
-  header.length = Wire.read();
-  header.lengthChecksum = Wire.read();
-  /* In case of crc error we set length to 0 (actually 1 because its decreased by one later on) */
-  if ( (header.length + header.lengthChecksum) != 0)
+  Wire.read();  /* Preamble */
+  Wire.read();  /* First byte startcode */
+  Wire.read();  /* Second byte startcode */
+  validDataLength = Wire.read(); /* Data length */
+  checksum = validDataLength + Wire.read();  /* Date length checksum */
+  /* Adjust validDataLength because it right now also contains TFI byte */
+  validDataLength--;
+  /* In case of length checksum error we set length to 0 */
+  if ( checksum != 0x00)
   {
-    header.length = 1;
+    validDataLength = 0;
   }
-  /* Now receive data, crc and postamble. Data length in header includes TFI, which 
-   * we already requested, therefore we need to substract this byte */
-  header.length--;
-  Serial.print("L: ");Serial.println(header.length);
-  Serial.print("LC: ");Serial.println(header.lengthChecksum);
-  Wire.requestBytes(header.length);
-  Serial.print("Total : "); Serial.print(1 + PN532_FRAME_LENGTH + header.length);
-  /* We know now how much bytes to receive. There can be a lot, max 255 for a normal information
-   * frame. Therefore we need to constantly read bytes from two wire buffer */
-  header.tfi = Wire.read();
-  return 0;
-  for (int i=0; i< header.length; i++)
+  /* @todo Check for extended frame if length and length checksum are 0xff */
+  checksum = Wire.read();  /* TFI */
+  for (int i=0; i< length; i++)
   {
-    /* Whait until data is available and read is from buffer */
+    /* Wait until some data is available and read it from buffer */
     while (! Wire.available()) ;
     data[i] = Wire.read();
+    checksum += data[i];
   }
   /* Only two more bytes to read. We request end of communication now */
   Wire.endReception();
-  header.dataChecksum = Wire.read();
-  /* @todo check data crc and return 0 if incorrect */
-  header.postamble = Wire.read();
-  return header.length;
+  checksum += Wire.read();
+  Wire.read();  /* Postamble */
+  /* Check if crc matched and return 0 valid bytes if not */
+  if (checksum != 0x00)
+  {
+    validDataLength = 0;
+  }
+  return validDataLength;
 }
 
 /** @}*/

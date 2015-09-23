@@ -13,12 +13,13 @@ PN532 nfc(0x24);
 
 void setup()
 {
+  uint8_t numBytesReceived = 0;
   Serial.begin (115200);
   Serial.println("Go");
   nfc.sendCommand(PN532_CommandCode_GetFirmwareVersion, data, 0);
   Serial.println("Command send");
-  nfc.receiveResponse(data);
-  Serial.println("Response received");
+  numBytesReceived = nfc.receiveResponse(data, 5);
+  Serial.print("Response received ");Serial.print(numBytesReceived);Serial.println(" Bytes"); 
 }  // end of setup
 
 void loop()

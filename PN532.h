@@ -18,9 +18,9 @@
 #define PN532_FRAME_TFI_CONTROLLERTOHOST  (uint8_t)0xD5
 #define PN532_FRAME_POSTAMBLE             (uint8_t)0x00
 
-#define PN532_FRAME_LENGTH                sizeof(PN532_NormalInformationFrame_t)
 #define PN532_FRAMEHEADER_LENGTH          (uint8_t)0x06
 #define PN532_FRAMEFOOTER_LENGTH          (uint8_t)0x02
+#define PN532_FRAME_LENGTH                PN532_FRAMEHEADER_LENGTH + PN532_FRAMEFOOTER_LENGTH
 #define PN532_ACKFRAME_LENGTH             sizeof(PN532_AckFrame_t)
 
 #define PN532_STATUSRAME_LENGTH           (uint8_t)0x01
@@ -35,19 +35,6 @@
 #define PN532_STATUSBYTE_RDY              (uint8_t)0x01
 
 /*******************| Type definitions |*******************************/
-/**
- * Struct to store all fix information, that is no data part, of a normal information
- * frame send or received to or from PN532
- */
-typedef struct {
-  uint8_t preamble;              /*!< fix 0x00 */
-  uint16_t startcode;            /*!< fix 0x00ff */
-  uint8_t length;                /*!< lenght of data plus one byte for TFI */
-  uint8_t lengthChecksum;        /*!< checksum for length, #length + #lengthChecksum = 0 */
-  uint8_t tfi;                   /*!< frame identifier, 0xd4 in case of frame from host to PN532, 0xd5 in case of frame from PN532 to host */
-  uint8_t dataChecksum;          /*!< data checksum TFI + d0 + d1 + ... +dn = 0 */
-  uint8_t postamble;             /*!< fix 0x00 */
-} PN532_NormalInformationFrame_t;
 
 typedef struct {
   uint8_t preamble;              /*!< fix 0x00 */
@@ -109,7 +96,7 @@ private:
 public:
   PN532(uint8_t address);
   bool sendCommand(PN532_CommandCode_t command, PN532_Data_t *data, uint8_t length);
-  uint8_t receiveResponse(PN532_Data_t *data);
+  uint8_t receiveResponse(PN532_Data_t *data, uint8_t length);
 };
 
 #endif
