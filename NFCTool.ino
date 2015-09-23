@@ -14,6 +14,7 @@ PN532 nfc(0x24);
 void setup()
 {
   Serial.begin (115200);
+  Serial.println("Go");
   nfc.sendCommand(PN532_CommandCode_GetFirmwareVersion, data, 0);
   Serial.println("Command send");
   nfc.receiveResponse(data);
@@ -22,5 +23,5 @@ void setup()
 
 void loop()
 {
-  delay (1000);
+  
 }

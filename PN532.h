@@ -103,7 +103,7 @@ class PN532
 {
 private:
   const uint8_t PN532Address;
-  void waitForStatusReady();
+  bool waitForStatusReady();
   bool receiveAckFrame();
   
 public:
