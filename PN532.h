@@ -9,7 +9,7 @@
 
 /*******************| Macros |*****************************************/
 
-#define PN532_DEBUG
+//#define PN532_DEBUG
 
 #define PN532_FRAME_PREAMBLE              (uint8_t)0x00
 #define PN532_FRAME_STARTCODE1            (uint8_t)0x00
@@ -31,7 +31,7 @@
 /**
  * Defines how often a status byte is requests and check for ready status
  * before giving up */
-#define PN532_STATUSBYTE_TIMEOUT          (uint8_t)0x20
+#define PN532_STATUSBYTE_TIMEOUT          (uint8_t)0x10
 #define PN532_STATUSBYTE_RDY              (uint8_t)0x01
 
 /*******************| Type definitions |*******************************/

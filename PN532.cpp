@@ -183,20 +183,22 @@ uint8_t PN532::receiveResponse(PN532_Data_t *data, uint8_t length)
   uint8_t checksum;
   uint8_t validDataLength;    /* Number of valid data bytes as reported by length byte */
   
-  /* Wait until PN532 is ready to send response */
-  waitForStatusReady();
+  /* Wait until PN532 is ready to send response. If not ready in time return 0. */
+  if(!waitForStatusReady()) return 0;
   Wire.beginReception(PN532Address);
-  Wire.requestBytes(PN532_FRAME_LENGTH + 1 + length);
+  Wire.requestBytes(1 + PN532_FRAME_LENGTH + length);
   /* Wait until header is completely received to read it */
   while (Wire.available() < PN532_FRAMEHEADER_LENGTH + 1 ) ;
   /* Ignore first byte. PN532 sends status byte again. However we assume that PN532 is
    * in ready state. */
-  Wire.read();
+  Wire.read();  /* Status byte */
   Wire.read();  /* Preamble */
   Wire.read();  /* First byte startcode */
   Wire.read();  /* Second byte startcode */
   validDataLength = Wire.read(); /* Data length */
-  checksum = validDataLength + Wire.read();  /* Date length checksum */
+  //Serial.print("validDataLength: 0x");Serial.println(validDataLength, HEX);
+  checksum = Wire.read();  /* Data length checksum */
+  checksum += validDataLength;
   /* Adjust validDataLength because it right now also contains TFI byte */
   validDataLength--;
   /* In case of length checksum error we set length to 0 */
@@ -206,17 +208,21 @@ uint8_t PN532::receiveResponse(PN532_Data_t *data, uint8_t length)
   }
   /* @todo Check for extended frame if length and length checksum are 0xff */
   checksum = Wire.read();  /* TFI */
-  for (int i=0; i< length; i++)
+  /* Add two more bytes for crc and postamble */
+  for (int i=0; i< length + 2; i++)
   {
     /* Wait until some data is available and read it from buffer */
     while (! Wire.available()) ;
     data[i] = Wire.read();
-    checksum += data[i];
+    /* Sometimes PN532 sents bogus if more bytes are received than validDataLength and CRC byte.
+     * Therefore we calculate CRC only for the valid data bytes. */
+    if (i < validDataLength + 1)
+    {
+      checksum += data[i];
+    }
+    //Serial.print("Data: 0x");Serial.println(data[i], HEX);
   }
-  /* Only two more bytes to read. We request end of communication now */
-  Wire.endReception();
-  checksum += Wire.read();
-  Wire.read();  /* Postamble */
+  //Serial.print("Final Checksum: 0x");Serial.println(checksum, HEX);
   /* Check if crc matched and return 0 valid bytes if not */
   if (checksum != 0x00)
   {
